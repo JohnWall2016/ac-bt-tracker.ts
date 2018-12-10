@@ -33,7 +33,7 @@ class BTTrackerCache {
                         .filter(s => s != '')
                         .join(separator);
                     if (!currentDate) {
-                        currentDate = dateFormat(new Date(), 'yyyyMMdd');
+                        currentDate = dateFormat(new Date(), 'yyyymmdd');
                     }
                     const currentFile = path.join(this._dir, `btl-${currentDate}.txt`);
                     fs.writeFileSync(currentFile, list);
@@ -44,7 +44,7 @@ class BTTrackerCache {
     }
 
     async getTrackerList(update: boolean = false) {
-        const currentDate = dateFormat(new Date(), 'yyyyMMdd');
+        const currentDate = dateFormat(new Date(), 'yyyymmdd');
         const currentFile = path.join(this._dir, `btl-${currentDate}.txt`);
         if (!fs.existsSync(currentFile) || update) {
             console.log("update tracker list");
