@@ -6,7 +6,7 @@ import dateFormat from 'dateformat';
 import { spawn } from 'node-pty';
 
 class BTTrackerCache {
-    _dir = (() => {
+    _cachedDir = (() => {
         if (process.env['BTL_CACHE']) {
             return process.env['BTL_CACHE'];
         } else if (process.platform == 'win32') {
@@ -17,40 +17,38 @@ class BTTrackerCache {
         }
     })();
 
+    get _cachedFile(): string {
+        const currentDate = dateFormat(new Date(), 'yyyymmdd');
+        return path.join(this._cachedDir, `btl-${currentDate}.txt`);
+    }
+
     _uri = 'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best_ip.txt';
 
     constructor() {
-        if (!fs.existsSync(this._dir))
-            fs.mkdirSync(this._dir);
+        if (!fs.existsSync(this._cachedDir))
+            fs.mkdirSync(this._cachedDir);
     }
 
-    async downloadTrackerList(currentDate: string, 
-                              separator: string = ',') {
+    async downloadTrackerList(separator: string = ',') {
         return new Promise(resolve => {
             https.get(this._uri, (res) => {
                 res.on('data', (d: Buffer) => {
                     const list = d.toString().split('\n')
                         .filter(s => s != '')
                         .join(separator);
-                    if (!currentDate) {
-                        currentDate = dateFormat(new Date(), 'yyyymmdd');
-                    }
-                    const currentFile = path.join(this._dir, `btl-${currentDate}.txt`);
-                    fs.writeFileSync(currentFile, list);
-                    resolve();         
+                    fs.writeFileSync(this._cachedFile, list);
+                    resolve();
                 });
             });
         });
     }
 
     async getTrackerList(update: boolean = false) {
-        const currentDate = dateFormat(new Date(), 'yyyymmdd');
-        const currentFile = path.join(this._dir, `btl-${currentDate}.txt`);
-        if (!fs.existsSync(currentFile) || update) {
+        if (!fs.existsSync(this._cachedFile) || update) {
             console.log("update tracker list");
-            await this.downloadTrackerList(currentDate);
+            await this.downloadTrackerList();
         }
-        return fs.readFileSync(currentFile, "utf-8");
+        return fs.readFileSync(this._cachedFile, "utf-8");
     }
 }
 
