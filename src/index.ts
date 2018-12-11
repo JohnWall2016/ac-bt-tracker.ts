@@ -10,7 +10,7 @@ class BTTrackerCache {
         if (process.env['BTL_CACHE']) {
             return process.env['BTL_CACHE'];
         } else if (process.platform == 'win32') {
-            let appData = process.env['APPDATA'];
+            const appData = process.env['APPDATA'];
             return path.join(appData, 'btl-cache');
         } else {
             return `${process.env['HOME']}/.btl-cache`;
@@ -52,10 +52,10 @@ class BTTrackerCache {
     }
 }
 
-let parser = new ArgumentParser();
+const parser = new ArgumentParser();
 parser.addArgument(['-u', '--update-trackers'], {nargs: 0});
 
-let args = parser.parseKnownArgs();
+const args = parser.parseKnownArgs();
 console.log(args);
 
 new BTTrackerCache().getTrackerList(args[0].update_trackers).then(
@@ -68,4 +68,3 @@ new BTTrackerCache().getTrackerList(args[0].update_trackers).then(
         });
     }
 );
-
