@@ -10,7 +10,7 @@ class BTTrackerCache {
         if (process.env['BTL_CACHE']) {
             return process.env['BTL_CACHE'];
         } else if (process.platform == 'win32') {
-            const appData = process.env['APPDATA'];
+            let appData = process.env['APPDATA'];
             return path.join(appData, 'btl-cache');
         } else {
             return `${process.env['HOME']}/.btl-cache`;
@@ -52,19 +52,23 @@ class BTTrackerCache {
     }
 }
 
-const parser = new ArgumentParser();
+let parser = new ArgumentParser();
 parser.addArgument(['-u', '--update-trackers'], {nargs: 0});
 
-const args = parser.parseKnownArgs();
+let args = parser.parseKnownArgs();
 console.log(args);
 
 new BTTrackerCache().getTrackerList(args[0].update_trackers).then(
     btList => {
-        const cmd = ['aria2c', `--bt-tracker=${btList}`, ...args[1]].join(' ');
+        let aria2c = 'aria2c';
+        if (process.platform == 'win32')
+            aria2c = 'aria2c.exe'
+        const cmd = [aria2c, `--bt-tracker=${btList}`, ...args[1]].join(' ');
         console.log(cmd);
-        const ps = spawn('aria2c', [`--bt-tracker=${btList}`, ...args[1]], {});
+        const ps = spawn(aria2c, [`--bt-tracker=${btList}`, ...args[1]], {});
         ps.on('data', function(data) {
             console.log(data);
         });
     }
 );
+
