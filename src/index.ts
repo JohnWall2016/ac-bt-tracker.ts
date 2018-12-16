@@ -53,22 +53,54 @@ class BTTrackerCache {
 }
 
 let parser = new ArgumentParser();
-parser.addArgument(['-u', '--update-trackers'], {nargs: 0});
+parser.addArgument(['-u', '--update-trackers'], { nargs: 0,
+    help: `update tracker list` });
+parser.addArgument(['-m', '--move-to'], { nargs: 1,
+    help: `move from src dir to dest dir` })
 
 let args = parser.parseKnownArgs();
 console.log(args);
 
-new BTTrackerCache().getTrackerList(args[0].update_trackers).then(
-    btList => {
-        let aria2c = 'aria2c';
-        if (process.platform == 'win32')
-            aria2c = 'aria2c.exe'
-        const cmd = [aria2c, `--bt-tracker=${btList}`, ...args[1]].join(' ');
-        console.log(cmd);
-        const ps = spawn(aria2c, [`--bt-tracker=${btList}`, ...args[1]], {});
-        ps.on('data', function(data) {
-            console.log(data);
+if (args[0].move_to) {
+    let srcDirs = <string[]>args[1];
+    let outDir = args[0].move_to[0];
+
+    console.log(`move files from ${srcDirs} to ${outDir}`);
+
+    if (srcDirs && outDir) {
+        srcDirs.forEach(dir => move(dir, outDir));
+    }
+
+    function move(srcDir: string, outDir: string, extFilter: RegExp = /\.(mp4|mkv)$/i) {
+        fs.readdir(srcDir, (_, files) => {
+            files.forEach(f => {
+                let file = path.join(srcDir, f);
+                if (fs.lstatSync(file).isDirectory()) {
+                    move(file, outDir);
+                } else {
+                    let m = file.match(extFilter);
+                    if (m) {
+                        f = f.replace(/^\[.+\]/, '');
+                        let outFile = path.join(outDir, f.slice(0, f.length - 1));
+                        console.log(`move ${file} to ${outFile}`);
+                        fs.renameSync(file, outFile);
+                    }
+                }
+            })
         });
     }
-);
-
+} else {
+    new BTTrackerCache().getTrackerList(args[0].update_trackers).then(
+        btList => {
+            let aria2c = 'aria2c';
+            if (process.platform == 'win32')
+                aria2c = 'aria2c.exe'
+            const cmd = [aria2c, `--bt-tracker=${btList}`, ...args[1]].join(' ');
+            console.log(cmd);
+            const ps = spawn(aria2c, [`--bt-tracker=${btList}`, ...args[1]], {});
+            ps.on('data', function (data) {
+                console.log(data);
+            });
+        }
+    );
+}
