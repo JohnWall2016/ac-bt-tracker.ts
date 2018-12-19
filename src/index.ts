@@ -30,14 +30,14 @@ class BTTrackerCache {
     }
 
     async downloadTrackerList(separator: string = ',') {
-        return new Promise(resolve => {
+        return new Promise<string>(resolve => {
             https.get(this._uri, (res) => {
                 res.on('data', (d: Buffer) => {
                     const list = d.toString().split('\n')
                         .filter(s => s != '')
                         .join(separator);
                     fs.writeFileSync(this._cachedFile, list);
-                    resolve();
+                    resolve(list);
                 });
             });
         });
@@ -46,7 +46,7 @@ class BTTrackerCache {
     async getTrackerList(update: boolean = false) {
         if (!fs.existsSync(this._cachedFile) || update) {
             console.log("update tracker list");
-            await this.downloadTrackerList();
+            return await this.downloadTrackerList();
         }
         return fs.readFileSync(this._cachedFile, "utf-8");
     }
