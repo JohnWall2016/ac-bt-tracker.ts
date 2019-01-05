@@ -56,7 +56,9 @@ let parser = new ArgumentParser();
 parser.addArgument(['-u', '--update-trackers'], { nargs: 0,
     help: `update tracker list` });
 parser.addArgument(['-m', '--move-to'], { nargs: 1,
-    help: `move from src dir to dest dir` })
+    help: `move from src dir to dest dir` });
+parser.addArgument(['-mx', '--move-to-exclude'], { nargs: 1,
+        help: `the files matched by this regex will not be moved` });
 
 let args = parser.parseKnownArgs();
 console.log(args);
@@ -64,17 +66,24 @@ console.log(args);
 if (args[0].move_to) {
     let srcDirs = <string[]>args[1];
     let outDir = args[0].move_to[0];
+    let exclude = args[0].move_to_exclude;
 
-    console.log(`move files from ${srcDirs} to ${outDir}`);
+    let msg = `move files from ${srcDirs} to ${outDir}`;
+    if (exclude) msg += ` excluding ${exclude}`;
+    console.log(msg);
 
     if (srcDirs && outDir) {
         srcDirs.forEach(dir => move(dir, outDir));
     }
 
     function move(srcDir: string, outDir: string, extFilter: RegExp = /\.(mp4|mkv)$/i) {
-        fs.readdir(srcDir, (_, files) => {
+        fs.readdir(srcDir, (err, files) => {
+            if (err) {
+                console.error(err.message);
+                process.exit(-1);
+            }
             files.forEach(f => {
-                if (f[0] !== '_') {
+                if (!exclude || !f.match(new RegExp(exclude))) {
                     let file = path.join(srcDir, f);
                     if (fs.lstatSync(file).isDirectory()) {
                             move(file, outDir);
