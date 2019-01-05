@@ -74,16 +74,18 @@ if (args[0].move_to) {
     function move(srcDir: string, outDir: string, extFilter: RegExp = /\.(mp4|mkv)$/i) {
         fs.readdir(srcDir, (_, files) => {
             files.forEach(f => {
-                let file = path.join(srcDir, f);
-                if (fs.lstatSync(file).isDirectory()) {
-                    move(file, outDir);
-                } else {
-                    let m = file.match(extFilter);
-                    if (m) {
-                        f = f.replace(/^\[.+\]/, '');
-                        let outFile = path.join(outDir, f.slice(0, f.length - 1));
-                        console.log(`move ${file} to ${outFile}`);
-                        fs.renameSync(file, outFile);
+                if (f[0] !== '_') {
+                    let file = path.join(srcDir, f);
+                    if (fs.lstatSync(file).isDirectory()) {
+                            move(file, outDir);
+                    } else {
+                        let m = file.match(extFilter);
+                        if (m) {
+                            f = f.replace(/^\[.+\]/, '');
+                            let outFile = path.join(outDir, f.slice(0, f.length - 1));
+                            console.log(`move ${file} to ${outFile}`);
+                            fs.renameSync(file, outFile);
+                        }
                     }
                 }
             })
